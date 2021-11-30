@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html>
+<head>
+   <script>
+        var active_page = 'p';
+        function httpGet(theUrl)
+    {
+        var xmlHttp = new XMLHttpRequest();
+        xmlHttp.open( "GET", theUrl, false );
+        xmlHttp.send( null );
+        return xmlHttp.responseText;
+    }
+
+    function addTableRows(row_data, table_id){
+        let rowToAdd = '<tr>';
+
+            if (!row_data.length){
+                Object.keys(row_data).forEach((key) => {
+                    rowToAdd += '<td>' + row_data[key] + '</td>'
+                })
+            }
+            else {
+                for (let i =0; i < row_data.length; i++){
+                    Object.keys(row_data[i]).forEach((key) => {
+                    rowToAdd += '<td>' + row_data[i][key] + '</td>'
+                    })
+                }
+            }
+        rowToAdd += '</tr>'
+        document.getElementById(table_id).innerHTML += rowToAdd;
+        console.log(rowToAdd);
+    }
+    function completeDelete(row_data){
+        console.log(row_data.split('_')[1])
+        console.log(row_data)
+        let backendUrl = 'http:localhost:8080';
+        if (row_data.split('_')[0] == 'patient'){
+            let response = httpGet(backendUrl +"/patients/delete/" + row_data.split('_')[1])
+            console.log(response)
+        }
+        else if (row_data.split('_')[0] == 'allergy'){
+
+        }
+    }
+    function addTableRowsDelete(row_data, table_id, row_type){
+        let id;
+        
+        var rowToAdd = '<tr>';
+            console.log('in addTableRowsDelete ::::::::: ' + this)
+            if (!row_data.length){
+                Object.keys(row_data).forEach((key) => {
+                    rowToAdd += '<td>' + row_data[key] + '</td>'
+                })
+                if (row_type == 'patients_id') {
+                    id = 'patient_' + row_data.id;
+                }
+                else if (row_type == 'allergy_allergy'){
+                    id = 'allergy_' + row_data[0] + '_' + rowdata[1]
+                }
+                rowToAdd += ' <td> <button type="button" id="' + id + '" onClick="completeDelete(this.id)">delete</button> </td>';
+            }
+            else {
+                for (let i =0; i < row_data.length; i++){
+                    Object.keys(row_data[i]).forEach((key) => {
+                    rowToAdd += '<td>' + row_data[i][key] + '</td>'
+                    })
+                }
+            }
+            rowToAdd += '</tr>';
+            document.getElementById(table_id).innerHTML += rowToAdd;
+
+    }
+
+    function splitArrayIntoChunksOfLen(arr, len) {
+        var chunks = [], i = 0, n = arr.length;
+        while (i < n) {
+            chunks.push(arr.slice(i, i += len));
+        }
+        return chunks;
+        }
+    function clearPage(){
+        if (document.getElementById("patient_table")) {
+            document.getElementById("patient_table").remove();
+        }
+        else if (document.getElementById("allergy_table")) {
+            document.getElementById("allergy_table").remove();
+        }
+        else if (document.getElementById("vaccine_table")) {
+            document.getElementById("vaccine_table").remove();
+        }
+        else if (document.getElementById("vaccination_site_table")) {
+            document.getElementById("vaccination_site_table").remove();
+        }
+        else if (document.getElementById('takes_table')) {
+            document.getElementById('takes_table').remove();
+        }
+        document.getElementById('searchbar').style.display = 'none';
+        if (document.getElementById('search_table')){
+            let searchTable = document.getElementById('search_table')
+            searchTable.style.display = 'none';
+            searchTable.innerHTML = ''
+        } 
+    }
+    function loadTable(page) {
+        clearPage()
+        if (page == 'patients') {
+            document.getElementById("body_id").innerHTML += '<table style="width:100%" class="table_element" id="patient_table" onload="loadTableData()" >' + 
+            '<tr> <th>id</th> <th>f_name</th> <th>m_initial</th> <th>l_name</th> <th>dob</th> <th>weight</th> </tr> </table>' +
+        ' </tr>' 
+
+        }
+        else if (page == 'allergy') { 
+            document.getElementById("body_id").innerHTML += '<table style="width:100%" class="table_element" id="allergy_table" onload="loadTableData()" >' + 
+            '<tr> <th>patient_id</th> <th>allergy</th> </tr> </table>' +
+        ' </tr>' 
+        }
+
+        else if (page == 'vaccine') {
+            document.getElementById("body_id").innerHTML += '<table style="width:100%" class="table_element" id="vaccine_table" onload="loadTableData()" >' + 
+            '<tr> <th>scient_name</th> <th>disease</th> <th>no_doses</th> </tr> </table>' +
+        ' </tr>' 
+        }
+        else if (page == 'takes'){
+            
+            document.getElementById("body_id").innerHTML += '<table style="width:100%" class="table_element" id="takes_table" onload="loadTableData()" >' + 
+            '<tr> <th>patient_id</th> <th>site_name</th> <th>scient_name</th> </tr> </table>' +
+        ' </tr>'
+        }
+        else if (page = 'vaccination_site') {
+            document.getElementById("body_id").innerHTML += '<table style="width:100%" class="table_element" id="vaccination_site_table" onload="loadTableData()" >' + 
+            '<tr> <th>name</th> <th>addr_street</th> <th>addr_city</th> <th>addr_state</th> <th>addr_zip</th> </tr> </table>' +
+        ' </tr>'
+        }
+        
+
+    loadTableData(page)
+    }
+
+    function removeAllChildNodes(parent) {
+    while (parent.firstChild) {
+        parent.removeChild(parent.firstChild);
+            }
+        }       
+    function loadTableData(page) {
+        let backendUrl = 'http:localhost:8080';
+        console.log('loadTableData ::::' + page)
+        if (page == 'patients') {
+            let patientsList = JSON.parse(httpGet(backendUrl +"/patients/all"));
+            console.log(splitArrayIntoChunksOfLen(patientsList, 30))
+            console.log("RUNNING loadTableDATA")
+
+            let pageAmount = splitArrayIntoChunksOfLen(patientsList, 30).length;
+            document.getElementById('bottom_navbar').innerHTML = ''
+            for (let i =0; i < pageAmount; i++){
+                console.log(i +1)
+                document.getElementById('bottom_navbar').innerHTML += '<a  class="active"' + 'id="' + i + '" onClick=loadTableData(' + i +  ') >' + (1+i)  + '</a>'
+                
+                
+            }
+            
+        for (let i =0; i < 30; i++){
+        
+            // console.log(patientsList[i].f_name)
+            document.getElementById('patient_table').innerHTML+= "<tr> <td>" + patientsList[i].id + "</td>"  + 
+           
+           "<td>" + patientsList[i].f_name + " </td> <td>"  + patientsList[i].m_initial + "  </td> <td> " + patientsList[i].l_name + "</td> <td>" + patientsList[i].dob + "</td>" +
+           "<td>" + patientsList[i].weight + "</td> <tr>" 
+            }
+
+            
+
+        }
+
+     else if (page == 'allergy') {
+        document.getElementById('bottom_navbar').innerHTML = '';
+        let allergyList = JSON.parse(httpGet(backendUrl + "/allergy/all"));
+
+        for (let i =0; i < allergyList.length; i++){
+        
+            // console.log(patientsList[i].f_name)
+            document.getElementById('allergy_table').innerHTML+= "<tr> <td>" + allergyList[i].patient_id + "</td>"  + 
+        
+        "<td>" + allergyList[i].allergy + " </td>  <tr>" 
+        }
+     }
+
+     else if (page == 'vaccine') {
+        document.getElementById('bottom_navbar').innerHTML = '';
+        let vaccineList = JSON.parse(httpGet(backendUrl + "/vaccine/all"));
+                for (let i =0; i < vaccineList.length; i++){
+                
+                    // console.log(patientsList[i].f_name)
+                    document.getElementById('vaccine_table').innerHTML+= "<tr> " +
+                 "<td>" + vaccineList[i].scient_name + " </td> <td>"  + vaccineList[i].disease + "  </td> <td> " + vaccineList[i].no_doses + "</td> <td>" + " </tr>" 
+                    }
+     }
+
+     else if (page == 'vaccination_site') {
+        document.getElementById('bottom_navbar').innerHTML = ''
+        let vaccination_siteList = JSON.parse(httpGet(backendUrl + "/vaccination_site/all"));
+                for (let i =0; i < vaccination_siteList.length; i++){
+                
+                    document.getElementById('vaccination_site_table').innerHTML+= "<tr> <td>" + vaccination_siteList[i].name + "</td>"  + 
+           
+           "<td>" + vaccination_siteList[i].addr_street + " </td> <td>"  + vaccination_siteList[i].addr_city + "  </td> <td> " + vaccination_siteList[i].addr_state + "</td> <td>" + vaccination_siteList[i].addr_zip 
+            + "</td>" + " <tr>" ;
+                    }
+     }
+
+     else if (page == 'takes') {
+        document.getElementById('bottom_navbar').innerHTML = '';
+        let takesList = JSON.parse(httpGet(backendUrl + "/takes/all"));
+        document.getElementById('takes_table').innerHTML = ''
+        document.getElementById('takes_table').innerHTML += '<tr>';
+        for (let i =0; i < takesList.length; i++){
+            document.getElementById('takes_table').innerHTML += '<td> ' + takesList[i].patient_id + '</td>' + '<td> ' + takesList[i].site_name + '</td>' + '<td> ' + takesList[i].scient_name + '</td>' + '<td> asdasd </td>' ;
+            //document.getElementById('takes_table').innerHTML += 
+        }
+        document.getElementById('takes_table').innerHTML += '</tr>';
+     }
+
+     else {
+        document.getElementById("patient_table").innerHTML = '<table style="width:100%" id="patient_table" onload="loadTableData()" >' + 
+            '<tr> <th>id</th> <th>f_name</th> <th>m_initial</th> <th>l_name</th> <th>dob</th> <th>weight</th> </tr> </table>' +
+        ' </tr>' 
+        let chunkedPatients = splitArrayIntoChunksOfLen(JSON.parse(httpGet("http:localhost:8080/patients/all")),30);
+        console.log(chunkedPatients)
+        
+        let pageNumber = parseInt(page);
+        console.log(pageNumber)
+        for (let i=0; i < chunkedPatients[page].length; i++){
+            document.getElementById('patient_table').innerHTML+= "<tr> <td>" + chunkedPatients[page][i].id + "</td>"  + 
+           "<td>" + chunkedPatients[page][i].f_name + " </td> <td>"  + chunkedPatients[page][i].m_initial + "  </td> <td> " + chunkedPatients[page][i].l_name + "</td> <td>" + chunkedPatients[page][i].dob + "</td>" +
+           "<td>" + chunkedPatients[page][i].weight + "</td> <tr>" 
+        }
+     }
+    }
+    
+    function navigate(page) {
+        this.active_page = page
+        console.log(this.active_page)
+        loadTable(page);
+        
+    }
+
+    function loadSearch(){
+        document.getElementById('searchbar').style.display = 'block'
+        const elements = document.getElementsByClassName('table_element');
+        elements[0].innerHTML =''
+        console.log(elements[0])
+    }
+    function completeSearch(){
+        let backendUrl = 'http:localhost:8080';
+        if (document.getElementById('search_select').value == 'patients_id'){
+            console.log('RUNNING')
+            
+            let patientsList = JSON.parse(httpGet(backendUrl +"/patients/" + document.getElementById('query_value').value)) 
+            console.log(patientsList );
+            let searchTable = document.getElementById('search_table');
+            searchTable.style.display = 'block';
+            searchTable.innerHTML += '<tr> <td> id </td>  <td> f_name </td> <td> m_initial </td> <td>l_name </td> <td> dob </td> <td> weight </td> <td> </td> </tr>'
+            addTableRowsDelete(patientsList, searchTable.id, 'patients_id')
+        }
+        else if (document.getElementById('search_select').value == 'allergy_allergy') {
+            let allergyList = JSON.parse(httpGet(backendUrl +"/patients/" + document.getElementById('query_value').value))
+            
+        }
+    }
+      
+      
+
+    
+   </script>
+<style>
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.topnav {
+  overflow: hidden;
+  background-color: black;
+
+}
+
+.topnav a {
+  float: left;
+  color: #f2f2f2;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+  font-size: 20px;
+  font-family:monospace;
+  color: #32CD32
+}
+
+.topnav a:hover {
+  background-color: #ddd;
+  color: black;
+}
+table, th, td {
+  border:1px solid black;
+}
+.topnav a.active {
+  color: #C0FF00;
+}
+
+
+#search_table {
+    height: 100%;
+    width: 100%
+}
+
+.bottom_navbar {
+  overflow: hidden;
+  background-color: #333;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+}
+#searchbar {
+    display: none;
+    height: 100px;
+    width: 100%;
+}
+.bottom_navbar a {
+  float: left;
+  display: block;
+  color: #f2f2f2;
+  text-align: center;
+  padding: 10px 10px;
+  text-decoration: none;
+  font-size: 12px;
+}
+
+.bottom_navbar a:hover {
+  background: #f1f1f1;
+  color: black;
+}
+
+.bottom_navbar a.active {
+  background-color: #04AA6D;
+  color: white;
+}
+
+#search_form {
+    width: 100%;
+}
+#search_box {
+    width: 100%;
+}
+#search_table {
+    display: none;
+}
+</style>
+</head>
+<body id="body_id" onload="loadTable('patients')">
+
+<div class="topnav">
+  <a class="active" id="patients" href="#patients" onClick="navigate(this.id)">patients</a>
+  <a href="#allergy" id="allergy" onClick="navigate(this.id)">allergy</a>
+  <a href="#vaccine" id="vaccine" onClick="navigate(this.id)">vaccine</a>
+  <a href="#takes" id="takes" onClick="navigate(this.id)">takes</a>
+  <a href="#vaccination_site"id="vaccination_site" onClick="loadSearch()">vaccination_site</a>
+  &nbsp
+  <a href="#search"id="vaccination_site" onClick="loadSearch()">search</a>
+</div>
+
+<div class="bottom_navbar" id="bottom_navbar"> </div>
+<div id="searchbar">
+
+        <form id="search_form">
+            <label for="fname" id="search_box">Query</label>
+            <input type="text" id="query_value" name="fname">
+            <select id="search_select" name="cars">
+                <option value="patients_id">Patients (id)</option>
+                <option value="allergy_allergy">Allergy (allergy)</option>
+                <option value="vaccine_scient_name">Vaccine (scient_name)</option>
+                <option value="takes_name">Takes (name)</option>
+                <option value="vaccination_site_name">vaccination_site (name)</option>
+                vaccination_site
+              </select>
+              <button type="submit" form="nameform" value="Submit" onClick="completeSearch()">Submit</button>
+          </form>
+</div>
+
+<table style="width:100%" id="search_table" >
+
+</table>
+  
+
+
+
+
+</body>
+</html>
