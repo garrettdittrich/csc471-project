@@ -49,5 +49,5 @@ jobs:
         with:
           app-name: 'csc471f21-dittrich-garrett'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_54C408C7A2D84D288547B4148B1A980E }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_E6E99282CAAF4851B606FB13C127A0A3 }}
           package: '*.jar'
